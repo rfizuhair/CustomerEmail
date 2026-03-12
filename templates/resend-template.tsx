@@ -24,22 +24,27 @@ type JobStep = "created" | "dispatched" | "en_route" | "on_site" | "complete";
 interface RfiTransactionalEmailProps {
   subject: string;
   preheaderText?: string;
-  statusHeadline: string;
+  statusTitle: string;
+  statusDescription: string;
   statusTimestamp: string;
   currentStep: JobStep;
   replyUrl: string;
   portalUrl: string;
   customerPo: string;
   rfiPo: string;
-  createdDate: string;
-  serviceRequest: string;
+  scheduledTime: string;
+  serviceType: string;
   locationName: string;
-  locationAddress: string;
-  locationCityStateZip: string;
-  locationPhone: string;
+  locationCityState: string;
+  serviceRequestText: string;
   amName: string;
-  amPhone: string;
   amEmail: string;
+  amPhone: string;
+  customerPortalUrl?: string;
+  notificationSettingsUrl?: string;
+  googlePlayUrl?: string;
+  appStoreUrl?: string;
+  companyAddress?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -48,14 +53,20 @@ interface RfiTransactionalEmailProps {
 
 const brand = {
   blue: "#2640cb",
+  blueLight: "#4f6cff",
+  blueBg: "#eef0ff",
+  blueCard: "#f0f4ff",
   grey: "#595959",
-  lightBg: "#f4f5f7",
+  dark: "#1a1a2e",
   white: "#ffffff",
-  cardBg: "#f9fafb",
-  border: "#e8e8e8",
-  muted: "#777777",
-  faint: "#999999",
+  pageBg: "#f0f2f5",
+  border: "#e5e7eb",
+  muted: "#6b7280",
+  faint: "#9ca3af",
+  cardBody: "#374151",
   trackInactive: "#d0d5dd",
+  pendingCircle: "#e5e7eb",
+  footerBg: "#fafafa",
 };
 
 const font =
@@ -85,14 +96,8 @@ function ProgressBar({ currentStep }: { currentStep: JobStep }) {
   const activeIdx = stepIndex(currentStep);
 
   return (
-    <Section style={{ padding: "8px 32px 32px 32px", backgroundColor: brand.white }}>
-      <table
-        role="presentation"
-        cellSpacing={0}
-        cellPadding={0}
-        border={0}
-        width="100%"
-      >
+    <Section style={{ backgroundColor: brand.white, padding: "28px 36px 8px 36px" }}>
+      <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
         <tbody>
           <tr>
             {STEPS.map((step, i) => {
@@ -100,96 +105,74 @@ function ProgressBar({ currentStep }: { currentStep: JobStep }) {
               const isCurrent = i === activeIdx;
               const isPending = i > activeIdx;
 
-              const leftTrackColor =
-                i === 0
-                  ? "transparent"
-                  : i <= activeIdx
-                    ? brand.blue
-                    : brand.trackInactive;
-              const rightTrackColor =
+              const leftTrack =
+                i === 0 ? "transparent" : i <= activeIdx ? brand.blue : brand.trackInactive;
+              const rightTrack =
                 i === STEPS.length - 1
                   ? "transparent"
                   : i < activeIdx
                     ? brand.blue
                     : brand.trackInactive;
 
-              const circleBg = isPending ? brand.border : brand.blue;
+              const circleBg = isPending ? brand.pendingCircle : brand.blue;
               const circleFg = isPending ? brand.faint : brand.white;
               const labelColor = isPending ? brand.faint : brand.blue;
-              const circleSize = isCurrent ? 32 : 28;
+              const size = isCurrent ? 32 : 26;
 
               return (
-                <td
-                  key={step.key}
-                  width="20%"
-                  align="center"
-                  style={{ verticalAlign: "top" }}
-                >
-                  {/* Track segment */}
-                  <table
-                    role="presentation"
-                    cellSpacing={0}
-                    cellPadding={0}
-                    border={0}
-                    width="100%"
-                  >
+                <td key={step.key} width="20%" align="center" style={{ verticalAlign: "top" }}>
+                  <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
                     <tbody>
                       <tr>
-                        <td
-                          width="50%"
-                          style={{
-                            borderBottom: `3px solid ${leftTrackColor}`,
-                          }}
-                        >
-                          &nbsp;
+                        <td align="center" style={{ paddingBottom: 4 }}>
+                          <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
+                            <tbody>
+                              <tr>
+                                <td width="50%" style={{ borderBottom: `3px solid ${leftTrack}` }}>&nbsp;</td>
+                                <td width="50%" style={{ borderBottom: `3px solid ${rightTrack}` }}>&nbsp;</td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </td>
-                        <td
-                          width="50%"
-                          style={{
-                            borderBottom: `3px solid ${rightTrackColor}`,
-                          }}
-                        >
-                          &nbsp;
+                      </tr>
+                      <tr>
+                        <td align="center" style={{ padding: "4px 0" }}>
+                          <div
+                            style={{
+                              width: size,
+                              height: size,
+                              borderRadius: "50%",
+                              backgroundColor: circleBg,
+                              color: circleFg,
+                              fontSize: isCurrent ? 12 : 11,
+                              fontWeight: 700,
+                              lineHeight: `${size}px`,
+                              textAlign: "center" as const,
+                              margin: "0 auto",
+                              ...(isCurrent && { boxShadow: "0 0 0 4px rgba(38,64,203,0.15)" }),
+                            }}
+                          >
+                            {isCompleted ? "\u2713" : i + 1}
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center">
+                          <span
+                            style={{
+                              fontSize: 9,
+                              color: labelColor,
+                              fontWeight: 700,
+                              textTransform: "uppercase" as const,
+                              letterSpacing: 0.4,
+                            }}
+                          >
+                            {step.label}
+                          </span>
                         </td>
                       </tr>
                     </tbody>
                   </table>
-
-                  {/* Circle */}
-                  <div
-                    style={{
-                      width: circleSize,
-                      height: circleSize,
-                      borderRadius: "50%",
-                      backgroundColor: circleBg,
-                      color: circleFg,
-                      fontSize: isCurrent ? 13 : 12,
-                      fontWeight: 700,
-                      lineHeight: `${circleSize}px`,
-                      textAlign: "center" as const,
-                      margin: "6px auto",
-                      ...(isCurrent && {
-                        boxShadow: "0 0 0 4px rgba(38,64,203,0.18)",
-                      }),
-                    }}
-                  >
-                    {isCompleted ? "\u2713" : i + 1}
-                  </div>
-
-                  {/* Label */}
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      color: labelColor,
-                      fontWeight: isCurrent ? 700 : 600,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: 0.3,
-                      margin: 0,
-                      textAlign: "center" as const,
-                    }}
-                  >
-                    {step.label}
-                  </Text>
                 </td>
               );
             })}
@@ -200,69 +183,19 @@ function ProgressBar({ currentStep }: { currentStep: JobStep }) {
   );
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function Divider() {
   return (
-    <Text
-      style={{
-        margin: "0 0 20px 0",
-        fontSize: 16,
-        fontWeight: 700,
-        color: brand.grey,
-        textTransform: "uppercase" as const,
-        letterSpacing: 0.5,
-        borderLeft: `4px solid ${brand.blue}`,
-        paddingLeft: 12,
-      }}
-    >
-      {children}
-    </Text>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  highlight,
-  isFirst,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-  isFirst?: boolean;
-}) {
-  return (
-    <tr>
-      <td
-        style={{
-          padding: isFirst ? "0 0 12px 0" : "12px 0 12px 0",
-          ...(!isFirst && {
-            borderTop: `1px solid ${brand.border}`,
-          }),
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: brand.faint,
-            textTransform: "uppercase" as const,
-            letterSpacing: 0.5,
-          }}
-        >
-          {label}
-        </span>
-        <br />
-        <span
-          style={{
-            fontSize: 15,
-            color: highlight ? brand.blue : brand.grey,
-            fontWeight: highlight ? 700 : 600,
-          }}
-        >
-          {value}
-        </span>
-      </td>
-    </tr>
+    <Section style={{ backgroundColor: brand.white, padding: "0 36px" }}>
+      <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
+        <tbody>
+          <tr>
+            <td style={{ borderTop: `1px solid ${brand.border}`, fontSize: 0, lineHeight: 0, height: 1 }}>
+              &nbsp;
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </Section>
   );
 }
 
@@ -273,22 +206,27 @@ function DetailRow({
 export default function RfiTransactionalEmail({
   subject = "Job Status Update",
   preheaderText,
-  statusHeadline = "Job status update",
+  statusTitle = "Tech On Site",
+  statusDescription = "",
   statusTimestamp = "",
   currentStep = "on_site",
   replyUrl = "#",
   portalUrl = "#",
   customerPo = "",
   rfiPo = "",
-  createdDate = "",
-  serviceRequest = "",
+  scheduledTime = "",
+  serviceType = "",
   locationName = "",
-  locationAddress = "",
-  locationCityStateZip = "",
-  locationPhone = "",
+  locationCityState = "",
+  serviceRequestText = "",
   amName = "",
-  amPhone = "",
   amEmail = "",
+  amPhone = "",
+  customerPortalUrl = "#",
+  notificationSettingsUrl = "#",
+  googlePlayUrl = "#",
+  appStoreUrl = "#",
+  companyAddress = "",
 }: RfiTransactionalEmailProps) {
   const currentYear = new Date().getFullYear();
 
@@ -297,299 +235,263 @@ export default function RfiTransactionalEmail({
       <Head>
         <title>{subject}</title>
       </Head>
-      <Preview>{preheaderText ?? statusHeadline}</Preview>
-      <Body
-        style={{
-          margin: 0,
-          padding: 0,
-          backgroundColor: brand.lightBg,
-          fontFamily: font,
-        }}
-      >
-        <Container
-          style={{
-            maxWidth: 600,
-            margin: "0 auto",
-            padding: "24px 16px",
-          }}
-        >
+      <Preview>{preheaderText ?? statusTitle}</Preview>
+      <Body style={{ margin: 0, padding: 0, backgroundColor: brand.pageBg, fontFamily: font }}>
+        <Container style={{ maxWidth: 600, margin: "0 auto", padding: "28px 16px" }}>
+
           {/* ---- HEADER ---- */}
           <Section
             style={{
               backgroundColor: brand.white,
-              padding: "24px 32px",
-              borderRadius: "8px 8px 0 0",
-              borderBottom: `3px solid ${brand.blue}`,
+              padding: "28px 36px 24px 36px",
+              borderRadius: "12px 12px 0 0",
             }}
           >
             <Row>
-              <Column style={{ textAlign: "left", verticalAlign: "middle" }}>
+              <Column style={{ verticalAlign: "middle" }}>
                 <Img
                   src="https://www.retailfixit.com/wp-content/uploads/2024/11/RFI-Logo-5-3.png"
                   alt="Retail Fix It"
-                  width={180}
-                  style={{ display: "block", maxWidth: 180, height: "auto" }}
+                  width={160}
+                  style={{ display: "block", maxWidth: 160, height: "auto" }}
                 />
               </Column>
               <Column style={{ textAlign: "right", verticalAlign: "middle" }}>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: "#888888",
-                    fontWeight: 500,
-                    textTransform: "uppercase" as const,
-                    letterSpacing: 0.5,
-                    margin: 0,
-                  }}
-                >
-                  Service Notification
+                <Text style={{ margin: 0, fontSize: 13, color: brand.grey, fontWeight: 700, letterSpacing: 0.3 }}>
+                  PO {rfiPo}
                 </Text>
               </Column>
             </Row>
           </Section>
 
-          {/* ---- STATUS HEADLINE ---- */}
-          <Section
-            style={{
-              backgroundColor: brand.white,
-              padding: "32px 32px 24px 32px",
-            }}
-          >
-            <Text
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: 22,
-                lineHeight: "30px",
-                color: brand.grey,
-                fontWeight: 700,
-              }}
-            >
-              {statusHeadline}
+          {/* accent gradient line */}
+          <Section style={{ backgroundColor: brand.white, padding: 0, fontSize: 0, lineHeight: 0 }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg, ${brand.blue} 0%, ${brand.blueLight} 100%)` }} />
+          </Section>
+
+          {/* ---- STATUS BADGE + TITLE ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "32px 36px 0 36px" }}>
+            <table role="presentation" cellSpacing={0} cellPadding={0} border={0}>
+              <tbody>
+                <tr>
+                  <td style={{ backgroundColor: brand.blueBg, borderRadius: 4, padding: "5px 12px" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: brand.blue, textTransform: "uppercase" as const, letterSpacing: 1 }}>
+                      &#9776;&nbsp; Status Update
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <Text style={{ margin: "14px 0 10px 0", fontSize: 26, lineHeight: "34px", color: brand.dark, fontWeight: 800, letterSpacing: -0.3 }}>
+              {statusTitle}
             </Text>
-            <Text
-              style={{
-                margin: 0,
-                fontSize: 14,
-                lineHeight: "22px",
-                color: brand.muted,
-              }}
-            >
-              {statusTimestamp}
+
+            <Text style={{ margin: "0 0 14px 0", fontSize: 15, lineHeight: "24px", color: brand.grey }}>
+              {statusDescription}
+            </Text>
+
+            <Text style={{ margin: 0, fontSize: 14, lineHeight: "22px", color: brand.grey }}>
+              <strong style={{ color: brand.dark }}>Check-in time:</strong> {statusTimestamp}
             </Text>
           </Section>
 
           {/* ---- PROGRESS BAR ---- */}
           <ProgressBar currentStep={currentStep} />
 
-          {/* ---- CTA BUTTONS ---- */}
-          <Section
-            style={{
-              backgroundColor: brand.white,
-              padding: "0 32px 32px 32px",
-            }}
-          >
+          {/* ---- DIVIDER ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "20px 36px 0 36px" }}>
+            <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
+              <tbody>
+                <tr>
+                  <td style={{ borderTop: `1px solid ${brand.border}`, fontSize: 0, lineHeight: 0, height: 1 }}>
+                    &nbsp;
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Section>
+
+          {/* ---- JOB DETAILS (2-col grid) ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "24px 36px 0 36px" }}>
             <Row>
-              <Column align="center">
-                <Button
-                  href={replyUrl}
+              <Column style={{ verticalAlign: "top", paddingRight: 16, paddingBottom: 20, width: "50%" }}>
+                <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                  Job Identifier
+                </Text>
+                <Text style={{ margin: "4px 0 0 0", fontSize: 15, color: brand.dark, fontWeight: 600, lineHeight: "22px" }}>
+                  {customerPo}
+                </Text>
+              </Column>
+              <Column style={{ verticalAlign: "top", paddingBottom: 20, width: "50%" }}>
+                <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                  PO Number
+                </Text>
+                <Text style={{ margin: "4px 0 0 0", fontSize: 15, color: brand.blue, fontWeight: 700, lineHeight: "22px" }}>
+                  #{rfiPo}
+                </Text>
+              </Column>
+            </Row>
+            <Row>
+              <Column style={{ verticalAlign: "top", paddingRight: 16, paddingBottom: 20, width: "50%" }}>
+                <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                  Scheduled Time
+                </Text>
+                <Text style={{ margin: "4px 0 0 0", fontSize: 15, color: brand.dark, fontWeight: 600, lineHeight: "22px" }}>
+                  {scheduledTime}
+                </Text>
+              </Column>
+              <Column style={{ verticalAlign: "top", paddingBottom: 20, width: "50%" }}>
+                <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                  Service Type
+                </Text>
+                <Text style={{ margin: "4px 0 0 0", fontSize: 15, color: brand.dark, fontWeight: 600, lineHeight: "22px" }}>
+                  {serviceType}
+                </Text>
+              </Column>
+            </Row>
+          </Section>
+
+          <Divider />
+
+          {/* ---- LOCATION ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "24px 36px 0 36px" }}>
+            <Row>
+              <Column style={{ width: 40, verticalAlign: "top", paddingRight: 10, paddingTop: 2 }}>
+                <div
                   style={{
-                    backgroundColor: brand.blue,
-                    color: brand.white,
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    backgroundColor: brand.blueBg,
+                    textAlign: "center" as const,
+                    lineHeight: "30px",
                     fontSize: 14,
-                    fontWeight: 600,
-                    padding: "12px 28px",
-                    borderRadius: 6,
-                    textDecoration: "none",
-                    display: "inline-block",
+                    color: brand.blue,
                   }}
                 >
-                  Click Here to Reply
-                </Button>
+                  &#9906;
+                </div>
               </Column>
-              <Column align="center">
+              <Column style={{ verticalAlign: "top" }}>
+                <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                  Location Details
+                </Text>
+                <Text style={{ margin: "4px 0 0 0", fontSize: 15, color: brand.dark, fontWeight: 600, lineHeight: "24px" }}>
+                  {locationName}, {locationCityState}
+                </Text>
+              </Column>
+            </Row>
+          </Section>
+
+          {/* ---- SERVICE REQUEST ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "24px 36px 0 36px" }}>
+            <Text style={{ margin: "0 0 10px 0", fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+              Service Request
+            </Text>
+            <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
+              <tbody>
+                <tr>
+                  <td
+                    style={{
+                      backgroundColor: brand.blueCard,
+                      borderLeft: `4px solid ${brand.blue}`,
+                      borderRadius: "0 8px 8px 0",
+                      padding: "16px 20px",
+                    }}
+                  >
+                    <Text style={{ margin: 0, fontSize: 14, lineHeight: "22px", color: brand.cardBody }}>
+                      {serviceRequestText}
+                    </Text>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Section>
+
+          {/* ---- BUTTONS ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "32px 36px 0 36px" }}>
+            <Row>
+              <Column align="center" style={{ width: "50%", paddingRight: 8 }}>
                 <Button
                   href={portalUrl}
                   style={{
-                    backgroundColor: brand.white,
-                    color: brand.grey,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    padding: "10px 28px",
-                    borderRadius: 6,
+                    display: "block",
+                    backgroundColor: brand.blue,
+                    color: brand.white,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    padding: "14px 8px",
+                    borderRadius: 8,
                     textDecoration: "none",
-                    display: "inline-block",
-                    border: `2px solid ${brand.grey}`,
+                    textAlign: "center" as const,
+                    width: "100%",
                   }}
                 >
-                  Portal Login
+                  Log In to the Job
+                </Button>
+              </Column>
+              <Column align="center" style={{ width: "50%", paddingLeft: 8 }}>
+                <Button
+                  href={replyUrl}
+                  style={{
+                    display: "block",
+                    backgroundColor: brand.white,
+                    color: brand.grey,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    padding: "12px 8px",
+                    borderRadius: 8,
+                    textDecoration: "none",
+                    textAlign: "center" as const,
+                    border: "2px solid #d1d5db",
+                    width: "100%",
+                  }}
+                >
+                  Click To Reply
                 </Button>
               </Column>
             </Row>
           </Section>
 
-          <Hr style={{ borderTop: `1px solid ${brand.border}`, margin: 0 }} />
-
-          {/* ---- JOB DETAILS ---- */}
-          <Section
-            style={{
-              backgroundColor: brand.white,
-              padding: "28px 32px",
-            }}
-          >
-            <SectionHeading>Job Details</SectionHeading>
-            <table
-              role="presentation"
-              cellSpacing={0}
-              cellPadding={0}
-              border={0}
-              width="100%"
-              style={{ backgroundColor: brand.cardBg, borderRadius: 6 }}
-            >
+          {/* ---- DIVIDER ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "28px 36px 0 36px" }}>
+            <table role="presentation" cellSpacing={0} cellPadding={0} border={0} width="100%">
               <tbody>
                 <tr>
-                  <td style={{ padding: 20 }}>
-                    <table
-                      role="presentation"
-                      cellSpacing={0}
-                      cellPadding={0}
-                      border={0}
-                      width="100%"
-                    >
-                      <tbody>
-                        <DetailRow label="Customer PO" value={customerPo} isFirst />
-                        <DetailRow label="RetailFixit PO" value={rfiPo} highlight />
-                        <DetailRow label="Created Date" value={createdDate} />
-                        <DetailRow label="Service Request" value={serviceRequest} />
-                      </tbody>
-                    </table>
+                  <td style={{ borderTop: `1px solid ${brand.border}`, fontSize: 0, lineHeight: 0, height: 1 }}>
+                    &nbsp;
                   </td>
                 </tr>
               </tbody>
             </table>
           </Section>
 
-          <Hr style={{ borderTop: `1px solid ${brand.border}`, margin: 0 }} />
-
-          {/* ---- LOCATION ---- */}
-          <Section
-            style={{
-              backgroundColor: brand.white,
-              padding: "28px 32px",
-            }}
-          >
-            <SectionHeading>Location</SectionHeading>
+          {/* ---- ACCOUNT CONTACT ---- */}
+          <Section style={{ backgroundColor: brand.white, padding: "24px 36px 32px 36px" }}>
             <table
               role="presentation"
               cellSpacing={0}
               cellPadding={0}
               border={0}
               width="100%"
-              style={{ backgroundColor: brand.cardBg, borderRadius: 6 }}
+              style={{ border: `1px solid ${brand.border}`, borderRadius: 8 }}
             >
               <tbody>
                 <tr>
-                  <td style={{ padding: 20 }}>
-                    <Text
-                      style={{
-                        margin: "0 0 4px 0",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        color: brand.grey,
-                      }}
-                    >
-                      {locationName}
+                  <td style={{ padding: "20px 24px" }}>
+                    <Text style={{ margin: 0, fontSize: 10, fontWeight: 700, color: brand.faint, textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+                      Account Contact
                     </Text>
-                    <Text
-                      style={{
-                        margin: "0 0 4px 0",
-                        fontSize: 14,
-                        color: brand.muted,
-                        lineHeight: "20px",
-                      }}
-                    >
-                      {locationAddress}
-                    </Text>
-                    <Text
-                      style={{
-                        margin: "0 0 4px 0",
-                        fontSize: 14,
-                        color: brand.muted,
-                      }}
-                    >
-                      {locationCityStateZip}
-                    </Text>
-                    <Text
-                      style={{
-                        margin: "8px 0 0 0",
-                        fontSize: 14,
-                        color: brand.muted,
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, color: brand.grey }}>
-                        Phone:
-                      </span>{" "}
-                      {locationPhone}
-                    </Text>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Section>
-
-          <Hr style={{ borderTop: `1px solid ${brand.border}`, margin: 0 }} />
-
-          {/* ---- ACCOUNT MANAGER ---- */}
-          <Section
-            style={{
-              backgroundColor: brand.white,
-              padding: "28px 32px",
-            }}
-          >
-            <SectionHeading>RFI Account Manager</SectionHeading>
-            <table
-              role="presentation"
-              cellSpacing={0}
-              cellPadding={0}
-              border={0}
-              width="100%"
-              style={{ backgroundColor: brand.cardBg, borderRadius: 6 }}
-            >
-              <tbody>
-                <tr>
-                  <td style={{ padding: 20 }}>
-                    <Text
-                      style={{
-                        margin: "0 0 6px 0",
-                        fontSize: 15,
-                        fontWeight: 700,
-                        color: brand.grey,
-                      }}
-                    >
+                    <Text style={{ margin: "8px 0 4px 0", fontSize: 16, fontWeight: 700, color: brand.dark }}>
                       {amName}
                     </Text>
-                    <Text
-                      style={{
-                        margin: "0 0 4px 0",
-                        fontSize: 14,
-                        color: brand.muted,
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, color: brand.grey }}>
-                        Direct:
-                      </span>{" "}
-                      {amPhone}
-                    </Text>
-                    <Text style={{ margin: 0, fontSize: 14 }}>
-                      <Link
-                        href={`mailto:${amEmail}`}
-                        style={{
-                          color: brand.blue,
-                          textDecoration: "none",
-                          fontWeight: 500,
-                        }}
-                      >
+                    <Text style={{ margin: 0, fontSize: 13, color: brand.grey, lineHeight: "22px" }}>
+                      <Link href={`mailto:${amEmail}`} style={{ color: brand.blue, textDecoration: "none" }}>
                         {amEmail}
                       </Link>
+                      {" \u2022 "}
+                      {amPhone}
                     </Text>
                   </td>
                 </tr>
@@ -600,47 +502,60 @@ export default function RfiTransactionalEmail({
           {/* ---- FOOTER ---- */}
           <Section
             style={{
-              backgroundColor: brand.grey,
-              padding: "28px 32px",
-              borderRadius: "0 0 8px 8px",
+              backgroundColor: brand.footerBg,
+              padding: "28px 36px",
+              borderTop: `1px solid ${brand.border}`,
+              borderRadius: "0 0 12px 12px",
             }}
           >
-            <Text
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: 11,
-                color: brand.white,
-                textAlign: "center" as const,
-                fontWeight: 600,
-                textTransform: "uppercase" as const,
-                letterSpacing: 1,
-              }}
-            >
-              This is an automated message. Please do not reply.
+            <Text style={{ margin: "0 0 16px 0", fontSize: 13, color: brand.muted, textAlign: "center" as const, lineHeight: "20px" }}>
+              Retail Fix It is the centralized job management platform for national, multi-site commercial facilities.
             </Text>
-            <Text
-              style={{
-                margin: "0 0 16px 0",
-                fontSize: 12,
-                color: "#cccccc",
-                textAlign: "center" as const,
-                lineHeight: "18px",
-              }}
-            >
-              &copy; {currentYear} Retail Fix It. All rights reserved.
+
+            <Row>
+              <Column align="center">
+                <Link href={customerPortalUrl} style={{ fontSize: 13, color: brand.blue, textDecoration: "underline", fontWeight: 600 }}>
+                  Customer Portal
+                </Link>
+              </Column>
+              <Column align="center">
+                <Link href={notificationSettingsUrl} style={{ fontSize: 13, color: brand.blue, textDecoration: "underline", fontWeight: 600 }}>
+                  Notification Settings
+                </Link>
+              </Column>
+            </Row>
+
+            <Text style={{ margin: "20px 0 10px 0", fontSize: 10, fontWeight: 700, color: brand.faint, textAlign: "center" as const, textTransform: "uppercase" as const, letterSpacing: 1 }}>
+              Download Mobile App
             </Text>
-            <Text style={{ margin: 0, textAlign: "center" as const }}>
-              <Link
-                href="https://www.retailfixit.com"
-                style={{
-                  fontSize: 12,
-                  color: "#a0b4ff",
-                  textDecoration: "none",
-                  fontWeight: 500,
-                }}
-              >
-                retailfixit.com
-              </Link>
+
+            <Row>
+              <Column align="right" style={{ paddingRight: 4 }}>
+                <Link href={googlePlayUrl}>
+                  <Img
+                    src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                    alt="Get it on Google Play"
+                    width={120}
+                    style={{ display: "block", height: "auto" }}
+                  />
+                </Link>
+              </Column>
+              <Column align="left" style={{ paddingLeft: 4 }}>
+                <Link href={appStoreUrl}>
+                  <Img
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    alt="Download on the App Store"
+                    width={120}
+                    style={{ display: "block", height: "auto" }}
+                  />
+                </Link>
+              </Column>
+            </Row>
+
+            <Text style={{ margin: "20px 0 0 0", fontSize: 11, color: brand.faint, textAlign: "center" as const, lineHeight: "18px" }}>
+              &copy; {currentYear} Retail Fix It (RFI). All rights reserved.
+              <br />
+              {companyAddress}
             </Text>
           </Section>
         </Container>
@@ -654,26 +569,29 @@ export default function RfiTransactionalEmail({
 /* ------------------------------------------------------------------ */
 
 RfiTransactionalEmail.PreviewProps = {
-  subject:
-    "Tech is on-site for RetailFixit Job (JERRY K HELM)-03102026-4 PO: 24744",
-  preheaderText:
-    "Tech is on-site for RetailFixit Job (JERRY K HELM)-03102026-4 PO: 24744",
-  statusHeadline:
-    "Tech is on-site for RetailFixit Job (JERRY K HELM)-03102026-4 PO: 24744",
-  statusTimestamp:
-    "3/10/2026 4:21:18 PM (Eastern Standard Time) \u2014 service location\u2019s local time",
+  subject: "Tech On Site \u2013 RetailFixit Job PO: 24744",
+  preheaderText: "Tech is on-site for RetailFixit Job (JERRY K HELM)-03102026-4 PO: 24744",
+  statusTitle: "Tech On Site",
+  statusDescription:
+    "The technician has arrived and is now on-site for your maintenance request.",
+  statusTimestamp: "March 10, 2026 at 4:21:18 PM (Eastern Standard Time).",
   currentStep: "on_site" as JobStep,
   replyUrl: "https://portal.retailfixit.com/reply/24744",
   portalUrl: "https://portal.retailfixit.com/login",
   customerPo: "(JERRY K HELM)-03102026-4",
   rfiPo: "24744",
-  createdDate: "3/10/2026",
-  serviceRequest: "Customer Email",
-  locationName: "(JERRY K HELM)",
-  locationAddress: "3172 Douglas Dairy Road",
-  locationCityStateZip: "Fieldale, Virginia, 24089",
-  locationPhone: "(806) 872-6721",
-  amName: "Imam Ahmed",
-  amPhone: "+8801618435400",
-  amEmail: "system.test@retailfixit.com",
+  scheduledTime: "March 3, 2026 at 10:00 AM",
+  serviceType: "Standard",
+  locationName: "2365 Main Street",
+  locationCityState: "Chula Vista, California",
+  serviceRequestText:
+    "The lighting in the main hall room needs fixing; several fixtures are flickering and two are completely out, requiring immediate attention for safety.",
+  amName: "Alysha Ramirez",
+  amEmail: "aramirez@retailfixit.com",
+  amPhone: "(555) 012-3456",
+  customerPortalUrl: "https://portal.retailfixit.com",
+  notificationSettingsUrl: "https://portal.retailfixit.com/settings/notifications",
+  googlePlayUrl: "https://play.google.com/store",
+  appStoreUrl: "https://apps.apple.com",
+  companyAddress: "123 Enterprise Way, Suite 400, San Diego, CA 92101",
 } satisfies RfiTransactionalEmailProps;

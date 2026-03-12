@@ -1,6 +1,6 @@
 # RFI Customer Transactional Email Template
 
-Professional email template for Retail Fix It (RFI) customer transactional notifications — job status updates, tech dispatch alerts, and service confirmations.
+Professional transactional email template for Retail Fix It (RFI) — job status updates, tech dispatch alerts, and service confirmations. Designed for dynamic platforms like [Resend](https://resend.com) and any HTML email pipeline.
 
 ---
 
@@ -8,11 +8,11 @@ Professional email template for Retail Fix It (RFI) customer transactional notif
 
 ### Option A: Raw HTML (any email platform)
 
-Use `templates/transactional-email.html` directly. Replace `{{placeholder}}` tokens with your values before sending.
+Use `templates/transactional-email.html`. Replace `{{placeholder}}` tokens with your dynamic values before sending.
 
 ### Option B: Resend + React Email
 
-Use `templates/resend-template.tsx` as a React Email component with [Resend](https://resend.com).
+Use `templates/resend-template.tsx` as a React Email component.
 
 ```tsx
 import RfiTransactionalEmail from "./templates/resend-template";
@@ -23,16 +23,30 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 await resend.emails.send({
   from: "notifications@retailfixit.com",
   to: "customer@example.com",
-  subject: "Tech is on-site for RetailFixit Job ...",
+  subject: "Tech On Site – RetailFixit Job PO: 24744",
   react: RfiTransactionalEmail({
-    statusHeadline: "Tech is on-site for RetailFixit Job ...",
+    statusTitle: "Tech On Site",
+    statusDescription: "The technician has arrived and is now on-site for your maintenance request.",
+    statusTimestamp: "March 10, 2026 at 4:21:18 PM (Eastern Standard Time).",
     currentStep: "on_site",
     customerPo: "(JERRY K HELM)-03102026-4",
     rfiPo: "24744",
-    // ... remaining props
+    scheduledTime: "March 3, 2026 at 10:00 AM",
+    serviceType: "Standard",
+    locationName: "2365 Main Street",
+    locationCityState: "Chula Vista, California",
+    serviceRequestText: "The lighting in the main hall room needs fixing...",
+    amName: "Alysha Ramirez",
+    amEmail: "aramirez@retailfixit.com",
+    amPhone: "(555) 012-3456",
+    // ...remaining props
   }),
 });
 ```
+
+### Preview
+
+Open `preview/sample-tech-on-site.html` in any browser to see the fully rendered template with sample data.
 
 ---
 
@@ -41,43 +55,58 @@ await resend.emails.send({
 ```
 ├── templates/
 │   ├── transactional-email.html   # Raw HTML template with {{placeholders}}
-│   └── resend-template.tsx        # React Email / Resend component
+│   └── resend-template.tsx        # React Email / Resend component (TypeScript)
 ├── preview/
-│   └── sample-tech-on-site.html   # Rendered preview (open in a browser)
+│   └── sample-tech-on-site.html   # Rendered preview — open in browser
 └── README.md
 ```
 
 ---
 
-## Design Specification
+## Template Layout
 
-| Token          | Value                          |
-| -------------- | ------------------------------ |
-| Primary Grey   | `#595959`                      |
-| Primary Blue   | `#2640cb`                      |
-| Background     | `#f4f5f7` (light)              |
-| Card BG        | `#f9fafb`                      |
-| White          | `#ffffff`                       |
-| Border         | `#e8e8e8`                      |
-| Font stack     | system-ui / Segoe UI / Roboto  |
-| Max width      | 600 px                         |
+The email follows this visual structure from top to bottom:
 
-### Layout
-
-- **Header** — RFI logo (left) + "Service Notification" label (right), underscored by a 3 px blue accent line.
-- **Status banner** — Dynamic headline and timestamp.
-- **Progress bar** — 5-step horizontal tracker: Created → Dispatched → En Route → On Site → Complete. Completed steps show a checkmark; the active step is highlighted with a ring; future steps are greyed out.
-- **CTA buttons** — Primary "Click Here to Reply" (blue fill) + secondary "Portal Login" (outlined grey).
-- **Job Details** — Customer PO, RFI PO (highlighted blue), created date, and service request type.
-- **Location** — Name, street address, city/state/zip, and phone number.
-- **Account Manager** — Name, direct phone, and clickable email link.
-- **Footer** — Dark grey (#595959) bar with automated-message disclaimer, copyright, and website link.
+| Section              | Description |
+| -------------------- | ----------- |
+| **Header**           | RFI logo (left) + PO number (right), underscored by a blue gradient accent line |
+| **Status badge**     | "Status Update" pill badge in light blue |
+| **Status title**     | Large bold headline (e.g. "Tech On Site") |
+| **Description**      | Human-readable explanation of the update |
+| **Check-in time**    | Bold timestamp with timezone |
+| **Progress bar**     | 5-step horizontal tracker with connected track lines |
+| **Job details**      | 2×2 grid: Job Identifier, PO Number, Scheduled Time, Service Type |
+| **Location**         | Pin icon + address on a single line |
+| **Service request**  | Blue-tinted card with left accent border containing request description |
+| **CTA buttons**      | "Log In to the Job" (filled blue) + "Click To Reply" (outlined grey) |
+| **Account contact**  | Bordered card with name, email link, and phone number |
+| **Footer**           | Platform tagline, Customer Portal & Notification Settings links, app store badges, copyright + address |
 
 ---
 
-## Progress Bar Steps
+## Design Tokens
 
-The progress bar supports 5 ordered job stages. Set `currentStep` (in the React component) or populate the matching colour tokens (in the HTML template) to reflect the current status.
+| Token              | Value             |
+| ------------------ | ----------------- |
+| Primary Blue       | `#2640cb`         |
+| Blue gradient end  | `#4f6cff`         |
+| Blue badge BG      | `#eef0ff`         |
+| Blue card BG       | `#f0f4ff`         |
+| Corporate Grey     | `#595959`         |
+| Dark text          | `#1a1a2e`         |
+| Page background    | `#f0f2f5`         |
+| Border             | `#e5e7eb`         |
+| Muted text         | `#6b7280`         |
+| Faint labels       | `#9ca3af`         |
+| Font stack         | system-ui / Segoe UI / Roboto |
+| Max width          | 600 px            |
+| Border radius      | 12 px (outer), 8 px (inner cards/buttons) |
+
+---
+
+## Progress Bar
+
+5 ordered job stages. Set `currentStep` in the React component or populate colour tokens in the HTML version.
 
 | Step | Key          | Label       |
 | ---- | ------------ | ----------- |
@@ -87,65 +116,60 @@ The progress bar supports 5 ordered job stages. Set `currentStep` (in the React 
 | 4    | `on_site`    | On Site     |
 | 5    | `complete`   | Complete    |
 
-### Colour logic
+### Visual states
 
-- **Completed steps:** circle = `#2640cb`, text = checkmark, label = `#2640cb`, track segment = `#2640cb`
-- **Active step:** circle = `#2640cb` with `box-shadow` ring, number shown, label bold `#2640cb`
-- **Pending steps:** circle = `#e8e8e8`, number = `#999999`, label = `#999999`, track segment = `#d0d5dd`
+- **Completed** — Blue circle with white checkmark, blue track, blue label
+- **Active (current)** — Larger blue circle with outer ring shadow, step number shown, bold blue label
+- **Pending** — Grey circle with grey number, grey dashed track, faint label
 
 ---
 
-## HTML Template Placeholders
+## HTML Placeholders Reference
 
-| Placeholder                  | Description                                    |
-| ---------------------------- | ---------------------------------------------- |
-| `{{subject}}`                | Email subject / `<title>`                      |
-| `{{preheader_text}}`         | Hidden preview text                            |
-| `{{status_headline}}`        | Main headline                                  |
-| `{{status_timestamp}}`       | Date/time string with timezone                 |
-| `{{reply_url}}`              | Href for the Reply button                      |
-| `{{portal_url}}`             | Href for the Portal Login button               |
-| `{{customer_po}}`            | Customer purchase order number                 |
-| `{{rfi_po}}`                 | RetailFixit purchase order number              |
-| `{{created_date}}`           | Job creation date                              |
-| `{{service_request}}`        | Service request type                           |
-| `{{location_name}}`          | Location / store name                          |
-| `{{location_address}}`       | Street address                                 |
-| `{{location_city_state_zip}}`| City, State, ZIP                               |
-| `{{location_phone}}`         | Location phone number                          |
-| `{{am_name}}`                | Account manager name                           |
-| `{{am_phone}}`               | Account manager direct phone                   |
-| `{{am_email}}`               | Account manager email                          |
-| `{{current_year}}`           | Copyright year                                 |
-| `{{step_N_bg}}`              | Step N circle background colour                |
-| `{{step_N_fg}}`              | Step N circle text colour                      |
-| `{{step_N_label_color}}`     | Step N label colour                            |
-| `{{progress_color_X_Y}}`     | Track colour between steps X and Y             |
+| Placeholder                    | Description |
+| ------------------------------ | ----------- |
+| `{{subject}}`                  | `<title>` / email subject |
+| `{{preheader_text}}`           | Hidden preview text |
+| `{{rfi_po}}`                   | RFI PO number (shown in header + job details) |
+| `{{status_title}}`             | Bold headline (e.g. "Tech On Site") |
+| `{{status_description}}`       | Descriptive paragraph |
+| `{{status_timestamp}}`         | Check-in time with timezone |
+| `{{customer_po}}`              | Customer purchase order / job identifier |
+| `{{scheduled_time}}`           | Scheduled service date/time |
+| `{{service_type}}`             | Service type (e.g. "Standard") |
+| `{{location_name}}`            | Street address / location name |
+| `{{location_city_state}}`      | City, State |
+| `{{service_request_text}}`     | Full service request description |
+| `{{portal_url}}`               | "Log In to the Job" button href |
+| `{{reply_url}}`                | "Click To Reply" button href |
+| `{{am_name}}`                  | Account manager name |
+| `{{am_email}}`                 | Account manager email |
+| `{{am_phone}}`                 | Account manager phone |
+| `{{customer_portal_url}}`      | Footer "Customer Portal" link |
+| `{{notification_settings_url}}`| Footer "Notification Settings" link |
+| `{{google_play_url}}`          | Google Play store link |
+| `{{app_store_url}}`            | Apple App Store link |
+| `{{current_year}}`             | Copyright year |
+| `{{company_address}}`          | Company address line |
+| `{{step_N_*}}`                 | Progress bar step styling tokens (see HTML comments) |
+| `{{progress_color_X_Y}}`       | Track colour between steps X and Y |
 
 ---
 
 ## React Email Props
 
-See the `RfiTransactionalEmailProps` interface in `resend-template.tsx` for the full typed contract. The component accepts `currentStep` as a simple union type (`"created" | "dispatched" | "en_route" | "on_site" | "complete"`) and renders all progress bar colours automatically.
+See `RfiTransactionalEmailProps` in `resend-template.tsx`. The component handles all progress bar styling automatically from the `currentStep` union type.
 
 ---
 
 ## Email Client Compatibility
 
-The template uses:
-
-- **Table-based layout** for Outlook / Windows Mail
-- **Inline styles** for Gmail / webmail
-- **MSO VML round-rect buttons** for Outlook desktop
-- **`role="presentation"`** on all layout tables for accessibility
-- **`<meta name="x-apple-disable-message-reformatting">`** for Apple Mail
-- Responsive `@media` breakpoint at 620 px
-
----
-
-## Previewing
-
-Open `preview/sample-tech-on-site.html` in any browser to see the rendered template with sample "Tech on Site" data pre-filled.
+- Table-based layout for Outlook / Windows Mail
+- All styles inlined for Gmail / webmail
+- MSO VML round-rect button fallbacks for Outlook desktop
+- `role="presentation"` on layout tables for accessibility
+- `x-apple-disable-message-reformatting` meta for Apple Mail
+- Responsive `@media` breakpoint at 620 px (stacks columns + full-width buttons)
 
 ---
 
